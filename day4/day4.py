@@ -24,11 +24,8 @@ def part1(my_input):
         for grid in list_of_grids:
             for i in range(len(grid)):
                 for j in range(len(grid)):
-                    try:
-                        if int(grid[i][j]) == int(drawn_number):
-                            grid[i][j] = "X"
-                    except:
-                        pass
+                    if grid[i][j] == drawn_number:
+                        grid[i][j] = "X"
             
         for grid in list_of_grids:
             if victorious_grid(grid) == True:
@@ -42,10 +39,8 @@ def victorious_grid(checked_grid):
     for line in checked_grid:
         interim_sum = 0
         for i in range(len(line)):
-            try:
+            if line[i].isnumeric():
                 interim_sum += int(line[i])
-            except:
-                pass
         if interim_sum == 0:
             return True
 
@@ -53,10 +48,8 @@ def victorious_grid(checked_grid):
     for i in range(len(checked_grid)):
         interim_sum = 0
         for j in range(len(checked_grid)):
-            try:
+            if checked_grid[j][i].isnumeric():
                 interim_sum += int(checked_grid[j][i])
-            except:
-                pass
         if interim_sum == 0:
             return True
     return False 
@@ -65,10 +58,8 @@ def calculate_board_sum(checked_grid):
     interim_sum = 0
     for i in range(len(checked_grid)):
         for j in range(len(checked_grid)):
-            try:
-                interim_sum += int(checked_grid[j][i])
-            except:
-                pass
+            if checked_grid[i][j].isnumeric():
+                interim_sum += int(checked_grid[i][j])
     return interim_sum
 
 def part2(my_input):
@@ -81,18 +72,14 @@ def part2(my_input):
             list_of_grids.append([])
         else:
             list_of_grids[-1].append((my_input[i].split())) 
-    
-    no_of_grids = len(list_of_grids)
 
     for x in range(len(drawn_numbers)):
         for grid in list_of_grids:
             for i in range(len(grid)):
                 for j in range(len(grid)):
-                    try:
-                        if int(grid[i][j]) == int(drawn_numbers[x]):
-                            grid[i][j] = "X"
-                    except:
-                        pass
+                    if grid[i][j] == drawn_numbers[x]:
+                        grid[i][j] = "X"
+
         
         for grid in list_of_grids:
             if victorious_grid(grid) == True:
@@ -104,11 +91,8 @@ def part2(my_input):
                     if victorious_grid(grid) != True:
                         for i in range(len(grid)):
                             for j in range(len(grid)):
-                                try:
-                                    if int(grid[i][j]) == int(drawn_numbers[x + 1]):
-                                        grid[i][j] = "X"
-                                except:
-                                    pass
+                                if grid[i][j] == drawn_numbers[x + 1]:
+                                    grid[i][j] = "X"
                         board_sum = calculate_board_sum(grid)
                         print(board_sum * int(drawn_numbers[x + 1]))
                 return
