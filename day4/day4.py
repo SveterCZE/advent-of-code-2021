@@ -109,7 +109,7 @@ def part2(my_input):
                             for j in range(len(grid)):
                                 try:
                                     if int(grid[i][j]) == int(drawn_numbers[x + 1]):
-                                        grid[i][j] = 0
+                                        grid[i][j] = "X"
                                 except:
                                     pass
                         board_sum = calculate_board_sum(grid)
