@@ -1,6 +1,3 @@
-from typing import DefaultDict
-
-
 def main():
     my_input = get_input()
     part1(my_input)
@@ -115,10 +112,5 @@ def part2(my_input):
                         board_sum = calculate_board_sum(grid)
                         print(board_sum * int(drawn_numbers[x + 1]))
                 return
-    
-    
-
-
-
 
 main()
