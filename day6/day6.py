@@ -13,7 +13,7 @@ def part1(fish):
     fish_count = [0] * 9
     for i, fish_no in enumerate(fish):
         fish_count[int(fish_no)] += 1
-    for i in range(256):
+    for i in range(80):
         hatch_fish(fish_count)
         sum_fish = 0
     for elem in fish_count:
@@ -29,6 +29,14 @@ def hatch_fish(fish_count):
     fish_count[8] = fish_giving_birth
 
 def part2(fish):
-    pass
+    fish_count = [0] * 9
+    for i, fish_no in enumerate(fish):
+        fish_count[int(fish_no)] += 1
+    for i in range(256):
+        hatch_fish(fish_count)
+        sum_fish = 0
+    for elem in fish_count:
+        sum_fish += elem
+    print(sum_fish)
 
 main()
