@@ -4,10 +4,10 @@ def main():
     part2(fish)
 
 def get_fish():
-    with open("input.txt", "r") as f:
-        lines = f.readlines()
-    fish = [line.strip().split(",") for line in lines]
-    return fish[0]
+    f = open("input.txt", "r")
+    for line in f:
+        fish = [int(elem.strip()) for elem in line.split(",")]
+    return fish
 
 def part1(fish):
     fish_count = [0] * 9
