@@ -41,6 +41,6 @@ def find_average(crab):
 
 def count_fuel_cost(distance):
     result = (distance*(distance + 1)) / 2
-    return round(result)
+    return int(result)
 
 main()
