@@ -1,9 +1,8 @@
-import itertools
-
 def main():
     wires_setup, signals = get_input()
     part1(signals)
     part2(wires_setup, signals)
+    return 0
 
 def get_input():
     f = open("input.txt", "r")
