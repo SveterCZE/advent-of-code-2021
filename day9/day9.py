@@ -24,30 +24,22 @@ def part1(cave_map):
 
 def is_lower_than_neighbours(cave_map, i, j):
     current_coord_value = cave_map[i][j]
-    try:
-        if current_coord_value >= cave_map[i][j + 1]:
+    neighbouring_coordinates = []
+    A = (i + 1, j)
+    if is_valid_coord(cave_map, A) == True:
+        neighbouring_coordinates.append(A)
+    B = (i - 1, j)
+    if is_valid_coord(cave_map, B) == True:
+        neighbouring_coordinates.append(B)
+    C = (i, j + 1)
+    if is_valid_coord(cave_map, C) == True:
+        neighbouring_coordinates.append(C)
+    D = (i, j - 1)
+    if is_valid_coord(cave_map, D) == True:
+        neighbouring_coordinates.append(D)
+    for elem in neighbouring_coordinates:
+        if current_coord_value >= cave_map[elem[0]][elem[1]]:
             return False
-    except:
-        pass
-
-    try:
-        if current_coord_value >= cave_map[i][j - 1]:
-            return False
-    except:
-        pass
-
-    try:
-        if current_coord_value >= cave_map[i + 1][j]:
-            return False
-    except:
-        pass
-
-    try:
-        if current_coord_value >= cave_map[i - 1][j]:
-            return False
-    except:
-        pass
-    
     return True
 
 def part2(cave_map, low_coordinates):
@@ -86,11 +78,8 @@ def get_neighbouring_tiles(cave_map, start_coordinate):
 def is_valid_coord(cave_map, elem):
     if (elem[0] < 0) or  (elem[1] < 0):
         return False
-    try:
-        x = int(cave_map[elem[0]][elem[1]])
-        x+=1
-        return True
-    except:
+    elif (elem[0] > len(cave_map) - 1) or  (elem[1] > len(cave_map[0]) - 1):
         return False
+    return True
 
 main()
