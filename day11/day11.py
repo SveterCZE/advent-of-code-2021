@@ -1,6 +1,3 @@
-from typing import NewType
-
-
 def main():
     energy_levels = get_input()
     part1(energy_levels)
