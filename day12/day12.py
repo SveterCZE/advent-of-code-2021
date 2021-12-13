@@ -85,17 +85,19 @@ class My_Graph():
         if current_journey[-1] == 'end':
             self.complete_journeys.append(current_journey)
         else:
-            for next_step in self.nodes[current_journey[-1]]:
-                copied_journey = copy.deepcopy(current_journey)
+            for next_step in self.nodes[current_journey[-1]]:                
                 if next_step == "start":
                     continue
                 elif next_step == "end":
+                    copied_journey = copy.deepcopy(current_journey)
                     copied_journey.append(next_step)
                     self.find_journey_recursive_part2(copied_journey)
                 elif next_step.isupper() == True:
+                    copied_journey = copy.deepcopy(current_journey)
                     copied_journey.append(next_step)
                     self.find_journey_recursive_part2(copied_journey)
                 elif self.can_small_cave_be_visited(current_journey, next_step) == True:
+                    copied_journey = copy.deepcopy(current_journey)
                     copied_journey.append(next_step)
                     self.find_journey_recursive_part2(copied_journey)
 
