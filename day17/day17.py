@@ -8,7 +8,6 @@ def main():
 
 def get_input():
     f = open("input.txt", "r")
-    grid = []
     for line in f:
         coords = line.replace('..',' ').replace('=',' ').replace(',',' ').split()
         return ((int(coords[3]), int(coords[4])), (int(coords[6]), int(coords[7])))
@@ -30,7 +29,6 @@ def part1(instructions):
 def shoot(x_velocity, y_velocity, x_borders, y_borders):
     current_x_coord = 0
     current_y_coord = 0
-    # print("Current coordinates: ",  current_x_coord, current_y_coord)
     max_y_coordinate = 0
     while(True):
         current_x_coord += x_velocity
@@ -40,7 +38,6 @@ def shoot(x_velocity, y_velocity, x_borders, y_borders):
         y_velocity -= 1
         if max_y_coordinate < current_y_coord:
             max_y_coordinate = current_y_coord
-        # print("Current coordinates: ",  current_x_coord, current_y_coord)
         if is_it_hit(current_x_coord, current_y_coord, x_borders, y_borders) == True:
             return True, max_y_coordinate
         elif is_it_miss(current_x_coord, current_y_coord, x_borders, y_borders, x_velocity) == True:
