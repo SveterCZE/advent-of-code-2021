@@ -1,6 +1,7 @@
 def main():
     player1_pos, player2_pos = get_input()
-    # part1(player1_pos, player2_pos)
+    part1(player1_pos, player2_pos)
+    player1_pos, player2_pos = get_input()
     part2(player1_pos, player2_pos)
 
 def get_input():
@@ -98,7 +99,7 @@ def part2_player1_turn(database_of_states, winning_unverses, results_frequency):
                 if new_player1_position > 10:
                     new_player1_position = new_player1_position % 10
                 new_player1_score = new_player1_position + player1_score
-                if new_player1_score >= 21:
+                if new_player1_score >= 1000:
                     winning_unverses[0] += initial_space_count * steps_frequency
                 else:
                     player1_tuple = (new_player1_position, new_player1_score)
@@ -120,7 +121,7 @@ def part2_player2_turn(database_of_states, winning_unverses, results_frequency):
                 if new_player2_position > 10:
                     new_player2_position = new_player2_position % 10
                 new_player2_score = new_player2_position + player2_score
-                if new_player2_score >= 21:
+                if new_player2_score >= 1000:
                     winning_unverses[1] += initial_space_count * steps_frequency
                 else:
                     player2_tuple = (new_player2_position, new_player2_score)
