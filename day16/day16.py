@@ -1,9 +1,6 @@
-import copy
-
 def main():
     instructions = get_input()
     part1(instructions)
-    part2(instructions)
     return 0
 
 def get_input():
@@ -15,61 +12,95 @@ def get_input():
 
 def part1(instructions):
     binary_instructions = convert_to_binary(instructions)
-    # print("Initial:", binary_instructions)
-    packet_versions_sum = process_binary_input(binary_instructions)
-
-def part2(instructions):
-    pass
+    packet_version, literal_value = process_binary_input(binary_instructions)
+    print("Part 1: ", packet_version)
+    print("Part 2: ", literal_value)
 
 def process_binary_input(binary_instructions):
-    packet_versions_sum = 0
-    packet_version, packet_length = process_binary_input_recursive(binary_instructions)
-    print(packet_version)
+    packet_version, packet_length, literal_value = process_binary_input_recursive(binary_instructions)
+    return packet_version, literal_value
 
 def process_binary_input_recursive(binary_instructions):
-    # print("Currently processed instruction: ", binary_instructions)
     packet_version = get_packet_version(binary_instructions)
-    # print("Packet version: ", packet_version)
     packet_type = get_packet_type(binary_instructions)
-    # print("Pacekt type:", packet_type)
     # Literal value --- Base case, returning packet, 
     if packet_type == 4:
         literal_value = process_literal_value(binary_instructions[6:])
         packet_length = int(6 + ((len(literal_value) / 4) * 5))
-        # print(packet_length)
-        # print("Literal_value", conver_to_decimal(literal_value))
-        return packet_version, packet_length
-    # Operator
+        return packet_version, packet_length, conver_to_decimal(literal_value)
     else:
+        values_of_embedded_packets = []
+    # Operator
         packet_header = binary_instructions[6]
-        # print("Packet header:", packet_header)
         if packet_header == "0":
             length_type_ID = binary_instructions[7:22]
             length_in_bits = conver_to_decimal(length_type_ID)
-            # print("Length of bits:", length_in_bits)
             remaining_binary_instruction = binary_instructions[22:22+length_in_bits]
             bits_explored = 0
             while (length_in_bits > bits_explored):
-                current_packet_version, current_packet_length = process_binary_input_recursive(remaining_binary_instruction)
+                current_packet_version, current_packet_length, literal_value = process_binary_input_recursive(remaining_binary_instruction)
                 packet_version += current_packet_version
                 bits_explored += current_packet_length
                 remaining_binary_instruction = remaining_binary_instruction[current_packet_length:]
-            return packet_version, bits_explored + 22
+                values_of_embedded_packets.append(literal_value)
+            applied_values = apply_operator(values_of_embedded_packets, packet_type)
+            return packet_version, bits_explored + 22, applied_values
 
         # Iterate over certain number of sub-packets
         elif packet_header == "1":
             bits_explored = 18
             length_type_ID = binary_instructions[7:18]
             number_of_sub_packets = conver_to_decimal(length_type_ID)
-            # print("Number of remaining:", number_of_sub_packets)
             remaining_binary_instruction = binary_instructions[18:]
             for i in range(number_of_sub_packets):
-                current_packet_version, current_packet_length = process_binary_input_recursive(remaining_binary_instruction)
+                current_packet_version, current_packet_length, literal_value = process_binary_input_recursive(remaining_binary_instruction)
                 packet_version += current_packet_version
                 bits_explored += current_packet_length
                 remaining_binary_instruction = remaining_binary_instruction[current_packet_length:]
-                # print(current_packet_version, current_packet_length)
-            return packet_version, bits_explored
+                values_of_embedded_packets.append(literal_value)
+            applied_values = apply_operator(values_of_embedded_packets, packet_type)
+            return packet_version, bits_explored, applied_values
+
+
+def apply_operator(values_of_embedded_packets, packet_type):
+    if packet_type == 0:
+        temp_sum = 0
+        for elem in values_of_embedded_packets:
+            temp_sum += elem
+        return temp_sum
+    elif packet_type == 1:
+        temp_product = values_of_embedded_packets[0]
+        for elem in values_of_embedded_packets[1:]:
+            temp_product *= elem
+        return temp_product
+    elif packet_type == 2:
+        temp_min = values_of_embedded_packets[0]
+        for elem in values_of_embedded_packets[1:]:
+            if elem < temp_min:
+                temp_min = elem
+        return temp_min
+    elif packet_type == 3:
+        temp_max = values_of_embedded_packets[0]
+        for elem in values_of_embedded_packets[1:]:
+            if elem > temp_max:
+                temp_max = elem
+        return temp_max
+    elif packet_type == 5:
+        if values_of_embedded_packets[0] > values_of_embedded_packets[1]:
+            return 1
+        else:
+            return 0
+    elif packet_type == 6:
+        if values_of_embedded_packets[0] < values_of_embedded_packets[1]:
+            return 1
+        else:
+            return 0
+    elif packet_type == 7:
+        if values_of_embedded_packets[0] == values_of_embedded_packets[1]:
+            return 1
+        else:
+            return 0
+
 
 
 def process_literal_value(literal_value_binary):
