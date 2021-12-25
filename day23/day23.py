@@ -38,13 +38,6 @@ class state_of_world():
         for i in range(4):
             if self.room_a != 0:
                 animal_value = self.room_a[i]
-                
 
-
-
-
-    
-
-    
 
 main()
