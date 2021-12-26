@@ -58,8 +58,8 @@ def part1(scanner_results):
     print(scanner_positions)
 
 def modify_coordinate(scanner1_coordinate, offset):
-    print(scanner1_coordinate)
     print(offset)
+    print(scanner1_coordinate)
     return (offset[0] - scanner1_coordinate[0], offset[1] - scanner1_coordinate[1], offset[2] - scanner1_coordinate[2])
 
 def create_possible_combinations(scanner_combinations):
