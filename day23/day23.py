@@ -1,5 +1,5 @@
-import queue
 from collections import deque
+import copy
 
 def main():
     room_a_animals = ["A", "D", "D", "D"]
@@ -11,10 +11,24 @@ def main():
     world.room_b.fill_room(room_b_animals)
     world.room_c.fill_room(room_c_animals)
     world.room_d.fill_room(room_d_animals)
-    # world.print_the_world()
+    check_possible_worlds(world)
+
+def check_possible_worlds(world):
+    # Base case --- We have found a world that was resolved successfully
+    if world.is_finished() == True:
+        print(world.total_movement_score)
+        return
+    # Recursive case --- (1) generate possible valid moves, (2) generate a deep copy of each world, (3) apply the movement and (4) recursively call this function
     valid_moves = world.generate_valid_moves()
-    print(valid_moves)
-     
+    valid_moves.sort(key = lambda x: x[2])
+    if len(valid_moves) > 0:
+        for applied_move in valid_moves:
+            alternative_world = copy.deepcopy(world)
+            alternative_world.make_movement(applied_move)
+            # print(alternative_world.total_movement_score)
+            check_possible_worlds(alternative_world)
+    # print(valid_moves)
+
 
 class state_of_world():
     def __init__(self):
@@ -26,16 +40,6 @@ class state_of_world():
         self.room_c = room("C")
         self.room_d = room("D")
         
-        # self.room_a = deque([],4)
-        # self.room_b = deque([],4)
-        # self.room_c = deque([],4)
-        # self.room_d = deque([],4)
-
-        # self.room_a_accepting_items = False
-        # self.room_b_accepting_items = False
-        # self.room_c_accepting_items = False
-        # self.room_d_accepting_items = False
-
         self.all_rooms = [self.room_a, self.room_b, self.room_c, self.room_d]
 
         self.left_storage_left_item = top_row_storage()
@@ -48,12 +52,39 @@ class state_of_world():
         self.between_B_C = top_row_storage()
         self.between_C_D = top_row_storage()
 
+        self.all_storages = [self.left_storage_left_item, self.left_storage_right_item, self.between_A_B, self.between_B_C, self.between_C_D, self.right_storage_left_item, self.right_storage_right_item]
         self.top_row = [self.left_storage_left_item, self.left_storage_right_item, self.room_a, self.between_A_B, self.room_b, self.between_B_C, self.room_c, self.between_C_D, self.room_d, self.right_storage_left_item, self.right_storage_right_item]
     
+    def is_finished(self):
+        # If some of the rooms is not fully occupied, return false
+        if self.room_a.get_room_occupancy() != 4 or self.room_b.get_room_occupancy() != 4 or self.room_c.get_room_occupancy() != 4 or self.room_d.get_room_occupancy() != 4:
+            return False
+        for elem in self.room_a.get_all_room_animals():
+            if elem.get_animal_class() != "A":
+                return False
+        for elem in self.room_b.get_all_room_animals():
+            if elem.get_animal_class() != "B":
+                return False
+        for elem in self.room_c.get_all_room_animals():
+            if elem.get_animal_class() != "C":
+                return False
+        for elem in self.room_d.get_all_room_animals():
+            if elem.get_animal_class() != "D":
+                return False
+        return True
+
+    def make_movement(self, possible_movement):
+        self.total_movement_score += possible_movement[2]
+        moved_item = self.top_row[possible_movement[0]].extract_top_animal()
+        self.top_row[possible_movement[1]].insert_new_animal(moved_item)
+
     def generate_valid_moves(self):
         # Part 1 generate valid moves from the rooms up
         # Check the top item on every single room
         all_valid_moves = []
+        for checked_storage in self.all_storages:
+            storage_valid_moves = self.generate_valid_moves_from_storage(checked_storage)
+            all_valid_moves += storage_valid_moves
         for checked_room in self.all_rooms:
             room_valid_moves = self.generate_valid_moves_from_room(checked_room)
             all_valid_moves += room_valid_moves
@@ -86,6 +117,84 @@ class state_of_world():
             # print(room_valid_moves)
             return room_valid_moves
 
+    def generate_valid_moves_from_storage(self, checked_storage):
+        # If the storage is empty, return empty --- no movements will be possible
+        if checked_storage.is_storage_occupied() == False:
+            return []
+        # If not empty, determine the letter of its animal
+        else:
+            valid_move = []
+            animal_letter = checked_storage.get_top_animal().get_animal_class()
+            # Determine if the corresponding room accepts new animals
+            if self.accepts_animals(animal_letter) == True:
+                # If so, check that there is a space between the storage and the target room
+                top_row_position, target_position = self.determine_checked_storage_and_target_room_nos(checked_storage, animal_letter)
+                # Check that there is a space between the two
+                if self.can_insert_animal_from_storage(top_row_position, target_position) == True:
+                    journey_distance = self.calculate_distance_between_items(checked_storage, self.top_row[target_position], top_row_position)
+                    journey_weighted_value = self.calculate_weighted_value(journey_distance, journey_distance)
+                    valid_move.append((top_row_position, target_position, journey_weighted_value))
+            return valid_move
+
+    def can_insert_animal_from_storage(self, start_position, target_position):
+        if start_position < target_position:
+            rider = start_position + 1
+            while True:
+                if isinstance(self.top_row[rider], top_row_storage):
+                    if self.top_row[rider].is_storage_occupied() == True:
+                        return False
+                if rider == target_position:
+                    return True
+                rider +=1
+        elif start_position > target_position:
+            rider = start_position - 1
+            while True:
+                if isinstance(self.top_row[rider], top_row_storage):
+                    if self.top_row[rider].is_storage_occupied() == True:
+                        return False
+                if rider == target_position:
+                    return True
+                rider -= 1
+
+
+    def determine_checked_storage_and_target_room_nos(self, checked_storage, animal_letter):
+        # Determine its number of the top row
+                if checked_storage == self.left_storage_left_item:
+                    top_row_position = 0
+                elif checked_storage == self.left_storage_right_item:
+                    top_row_position = 1
+                elif checked_storage == self.between_A_B:
+                    top_row_position = 3
+                elif checked_storage == self.between_B_C:
+                    top_row_position = 5
+                elif checked_storage == self.between_C_D:
+                    top_row_position = 7
+                elif checked_storage == self.right_storage_left_item:
+                    top_row_position = 9
+                elif checked_storage == self.right_storage_right_item:
+                    top_row_position = 10
+                
+                # Determine the top row number of the target
+                if animal_letter == "A":
+                    target_position = 2
+                elif animal_letter == "B":
+                    target_position = 4
+                elif animal_letter == "C":
+                    target_position = 6
+                elif animal_letter == "D":
+                    target_position = 8
+                return top_row_position, target_position
+
+    def accepts_animals(self, animal_letter):
+        if animal_letter == "A":
+            return self.room_a.get_room_status()
+        elif animal_letter == "B":
+            return self.room_b.get_room_status()
+        elif animal_letter == "C":
+            return self.room_c.get_room_status()
+        elif animal_letter == "D":
+            return self.room_d.get_room_status()
+
     def calculate_distance_between_items(self, start_position, destination_position, initial_top_row_position):
         total_distance = 0
         # If the start position is a room --- calculate a distance to the top row
@@ -103,6 +212,16 @@ class state_of_world():
             total_distance += distance_to_bottom
         return total_distance
 
+    def calculate_weighted_value(self, journey_distance, initial_top_row_position):
+        moved_value = self.top_row[initial_top_row_position].get_top_animal().get_animal_class()
+        if moved_value == "A":
+            return journey_distance
+        elif moved_value == "B":
+            return journey_distance * 10
+        elif moved_value == "C":
+            return journey_distance * 100
+        elif moved_value == "D":
+            return journey_distance * 1000
 
     def find_valid_moves_on_top_row(self, current_room, top_item, initial_top_row_position):
         valid_moves = []
@@ -118,16 +237,19 @@ class state_of_world():
                 # Otherwise add it as a possible position
                 elif checked_position.is_storage_occupied() == False:
                     journey_distance = self.calculate_distance_between_items(current_room, checked_position, initial_top_row_position)
-                    valid_moves.append((current_room, checked_position, journey_distance))
+                    journey_weighted_value = self.calculate_weighted_value(journey_distance, initial_top_row_position)
+                    # valid_moves.append((current_room, checked_position, journey_weighted_value))
+                    valid_moves.append((initial_top_row_position, left_rider, journey_weighted_value))
             # Check if it is a room. 
             elif isinstance(checked_position, room):
                 # Check if it accepts animals for insertion
                 if checked_position.get_room_status() == True:
                     # If so, check if the animals fits into this room and if so, add it there
                     if checked_position.get_room_class() == top_item.get_animal_class():
-                        # TODO - Calculate a distance as well
                         journey_distance = self.calculate_distance_between_items(current_room, checked_position, initial_top_row_position)
-                        valid_moves.append((current_room, checked_position, journey_distance))
+                        journey_weighted_value = self.calculate_weighted_value(journey_distance, initial_top_row_position)
+                        # valid_moves.append((current_room, checked_position, journey_weighted_value))
+                        valid_moves.append((initial_top_row_position, left_rider, journey_weighted_value))
             left_rider -= 1
 
         # Check to the right
@@ -141,7 +263,9 @@ class state_of_world():
                 # Otherwise add it as a possible position
                 elif checked_position.is_storage_occupied() == False:
                     journey_distance = self.calculate_distance_between_items(current_room, checked_position, initial_top_row_position)
-                    valid_moves.append((current_room, checked_position, journey_distance))
+                    journey_weighted_value = self.calculate_weighted_value(journey_distance, initial_top_row_position)
+                    # valid_moves.append((current_room, checked_position, journey_weighted_value))
+                    valid_moves.append((initial_top_row_position, right_rider, journey_weighted_value))
             # Check if it is a room. 
             elif isinstance(checked_position, room):
                 # Check if it accepts animals for insertion
@@ -149,7 +273,9 @@ class state_of_world():
                     # If so, check if the animals fits into this room and if so, add it there
                     if checked_position.get_room_class() == top_item.get_animal_class():
                         journey_distance = self.calculate_distance_between_items(current_room, checked_position, initial_top_row_position)
-                        valid_moves.append((current_room, checked_position, journey_distance))
+                        journey_weighted_value = self.calculate_weighted_value(journey_distance, initial_top_row_position)
+                        # valid_moves.append((current_room, checked_position, journey_weighted_value))
+                        valid_moves.append((initial_top_row_position, right_rider, journey_weighted_value))
             right_rider += 1
         return valid_moves
 
@@ -158,31 +284,6 @@ class state_of_world():
             if elem.reached_destination == False:
                 return False
         return True
-
-    # def fill_a_room(self, room_a_animals):
-    #     for elem in room_a_animals:
-    #         created_animal = moving_animal(elem, self.room_a)
-    #         self.room_a.append(created_animal)
-    #         self.all_animals.append(created_animal)
-    
-    # def fill_b_room(self, room_b_animals):
-    #     for elem in room_b_animals:
-    #         created_animal = moving_animal(elem, self.room_b)
-    #         self.room_b.append(created_animal)
-    #         self.all_animals.append(created_animal)
-    
-    # def fill_c_room(self, room_c_animals):
-    #     for elem in room_c_animals:
-    #         created_animal = moving_animal(elem, self.room_c)
-    #         self.room_c.append(created_animal)
-    #         self.all_animals.append(created_animal)
-    
-    # def fill_d_room(self, room_d_animals):
-    #     for elem in room_d_animals:
-    #         created_animal = moving_animal(elem, self.room_d)
-    #         self.room_d.append(created_animal)
-    #         self.all_animals.append(created_animal)
-
 
 class moving_animal():
     def __init__ (self, animal_class):
@@ -208,6 +309,8 @@ class room():
             self.room_content.append(created_animal)
     
     def get_room_status(self):
+        if self.get_room_occupancy() == 0:
+            self.accepting_animals = True
         return self.accepting_animals
     
     def get_top_animal(self):
@@ -215,6 +318,15 @@ class room():
 
     def get_room_class(self):
         return self.room_class
+    
+    def get_all_room_animals(self):
+        return self.room_content
+    
+    def extract_top_animal(self):
+        return self.room_content.popleft()
+    
+    def insert_new_animal(self, inserted_animal):
+        self.room_content.append(inserted_animal)
 
 class top_row_storage():
     def __init__ (self):
@@ -226,7 +338,13 @@ class top_row_storage():
         else:
             return True
     
-    def get_inserted_animal(self):
+    def get_top_animal(self):
         return self.storage_content[0]
+    
+    def extract_top_animal(self):
+        return self.storage_content.popleft()
+
+    def insert_new_animal(self, inserted_animal):
+        self.storage_content.append(inserted_animal)
 
 main()
