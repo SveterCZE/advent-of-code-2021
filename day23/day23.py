@@ -1,5 +1,6 @@
 from collections import deque
 import copy
+import time
 
 def main():
     room_a_animals = ["A", "D", "D", "D"]
@@ -11,22 +12,38 @@ def main():
     world.room_b.fill_room(room_b_animals)
     world.room_c.fill_room(room_c_animals)
     world.room_d.fill_room(room_d_animals)
-    check_possible_worlds(world)
+    states_of_world = {}
+    final_scores = set()
+    check_possible_worlds(world, final_scores, states_of_world)
+    print(final_scores)
+    print("Minimum:")
+    print(min(final_scores))
+    print("Maximum:")
+    print(max(final_scores))
+    print("Various states explored:")
+    print(len(states_of_world))
 
-def check_possible_worlds(world):
+def check_possible_worlds(world, final_scores, states_of_world):
     # Base case --- We have found a world that was resolved successfully
     if world.is_finished() == True:
-        print(world.total_movement_score)
+        achieved_score = world.total_movement_score
+        if achieved_score not in final_scores:
+            final_scores.add(achieved_score)
+            print(achieved_score)
         return
     # Recursive case --- (1) generate possible valid moves, (2) generate a deep copy of each world, (3) apply the movement and (4) recursively call this function
-    valid_moves = world.generate_valid_moves()
-    valid_moves.sort(key = lambda x: x[2])
-    if len(valid_moves) > 0:
-        for applied_move in valid_moves:
-            alternative_world = copy.deepcopy(world)
-            alternative_world.make_movement(applied_move)
-            # print(alternative_world.total_movement_score)
-            check_possible_worlds(alternative_world)
+    # Generate new worlds only if there are no final scores or the scores of the current world are lower than the minimum achieved score
+    elif len(final_scores) == 0 or world.total_movement_score < min(final_scores):
+        valid_moves = world.generate_valid_moves()
+        valid_moves.sort(key = lambda x: x[2])
+        if len(valid_moves) > 0:
+            for applied_move in valid_moves:
+                alternative_world = copy.deepcopy(world)
+                alternative_world.make_movement(applied_move)
+                current_state_of_world = alternative_world.export_state_of_world()
+                if current_state_of_world not in states_of_world or states_of_world[current_state_of_world] > alternative_world.total_movement_score:
+                    states_of_world[current_state_of_world] = alternative_world.total_movement_score
+                    check_possible_worlds(alternative_world, final_scores, states_of_world)
     # print(valid_moves)
 
 
@@ -55,6 +72,12 @@ class state_of_world():
         self.all_storages = [self.left_storage_left_item, self.left_storage_right_item, self.between_A_B, self.between_B_C, self.between_C_D, self.right_storage_left_item, self.right_storage_right_item]
         self.top_row = [self.left_storage_left_item, self.left_storage_right_item, self.room_a, self.between_A_B, self.room_b, self.between_B_C, self.room_c, self.between_C_D, self.room_d, self.right_storage_left_item, self.right_storage_right_item]
     
+    def export_state_of_world(self):
+        exported_state_of_world = (self.left_storage_left_item.get_representation(), self.left_storage_right_item.get_representation(), self.room_a.get_representation(), 
+            self.between_A_B.get_representation(), self.room_b.get_representation(), self.between_B_C.get_representation(), self.room_c.get_representation(), self.between_C_D.get_representation(), 
+            self.room_d.get_representation(), self.right_storage_left_item.get_representation(), self.right_storage_right_item.get_representation())
+        return exported_state_of_world
+
     def is_finished(self):
         # If some of the rooms is not fully occupied, return false
         if self.room_a.get_room_occupancy() != 4 or self.room_b.get_room_occupancy() != 4 or self.room_c.get_room_occupancy() != 4 or self.room_d.get_room_occupancy() != 4:
@@ -132,7 +155,7 @@ class state_of_world():
                 # Check that there is a space between the two
                 if self.can_insert_animal_from_storage(top_row_position, target_position) == True:
                     journey_distance = self.calculate_distance_between_items(checked_storage, self.top_row[target_position], top_row_position)
-                    journey_weighted_value = self.calculate_weighted_value(journey_distance, journey_distance)
+                    journey_weighted_value = self.calculate_weighted_value(journey_distance, top_row_position)
                     valid_move.append((top_row_position, target_position, journey_weighted_value))
             return valid_move
 
@@ -155,7 +178,6 @@ class state_of_world():
                 if rider == target_position:
                     return True
                 rider -= 1
-
 
     def determine_checked_storage_and_target_room_nos(self, checked_storage, animal_letter):
         # Determine its number of the top row
@@ -327,6 +349,12 @@ class room():
     
     def insert_new_animal(self, inserted_animal):
         self.room_content.append(inserted_animal)
+    
+    def get_representation(self):
+        temp_representation = []
+        for elem in self.room_content:
+            temp_representation.append(elem.get_animal_class())
+        return (tuple(temp_representation))
 
 class top_row_storage():
     def __init__ (self):
@@ -346,5 +374,13 @@ class top_row_storage():
 
     def insert_new_animal(self, inserted_animal):
         self.storage_content.append(inserted_animal)
+    
+    def get_representation(self):
+        if len(self.storage_content) == 0:
+            return "."
+        else:
+            return self.get_top_animal().get_animal_class()
 
+start_time = time.time()
 main()
+print("--- %s seconds ---" % (time.time() - start_time))
