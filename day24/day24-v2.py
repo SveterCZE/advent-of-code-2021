@@ -36,9 +36,9 @@ def get_valid_numbers(instructions):
 
 def get_valid_numbers_helper(instructions, valid_numbers, digit_order, list_representation, target_z_register):
     # Base case --- all numbers have been added
-    # if digit_order < 1:
-        # print("level:", digit_order, "".join(map(str, list_representation)))
-        # pass
+    if digit_order < 1:
+        print("level:", digit_order, "".join(map(str, list_representation)))
+        pass
     if digit_order < 0:
         valid_numbers.append(int("".join(map(str, list_representation))))
         print("adding number")
@@ -54,7 +54,7 @@ def get_valid_numbers_helper(instructions, valid_numbers, digit_order, list_repr
 def get_valid_combinations(instructions, digit_order, target_z_register):
     valid_combinations = set()
     for w_register in range(1,10):
-        for initial_z_register in range(1000):
+        for initial_z_register in range(27000):
             if check_number_recursive_helper(instructions[digit_order], w_register, initial_z_register, target_z_register) == True:
                 valid_combinations.add((w_register, initial_z_register))
         for initial_z_register in range(target_z_register*26 - 100, target_z_register*26 + 100):
