@@ -1,8 +1,9 @@
 import ast
 import math
+import copy
 
 def get_input():
-    f = open("sample7.txt", "r")
+    f = open("input.txt", "r")
     converted_instructions = []
     for i, j in enumerate(f):
         converted_instructions.append(ast.literal_eval(j.strip()))
@@ -11,20 +12,37 @@ def get_input():
 def main():
     instructions = get_input()
     part1(instructions)
+    instructions = get_input()
     part2(instructions)
 
 def part1(instructions):
     converted_to_trees = []
     for elem in instructions:
         converted_to_trees.append(MyTree(elem))
-    for elem in converted_to_trees:
-        elem.run_reduction_operations()
-    for elem in converted_to_trees:
-        # print(elem.calculate_magnitude(elem.get_top_node()))
-        pass
+    initial_tree = converted_to_trees[0]
+    for i in range(1, len(converted_to_trees)):
+        initial_tree.add_new_tree(converted_to_trees[i])
+        initial_tree.run_reduction_operations()
+    print(initial_tree.calculate_magnitude(initial_tree.get_top_node()))
+    return 0
 
 def part2(instructions):
-    pass
+    converted_to_trees = []
+    for elem in instructions:
+        converted_to_trees.append(MyTree(elem))
+    top_score = 0
+    for i in range(len(converted_to_trees)):
+        for j in range(len(converted_to_trees)):
+            if i != j:
+                temp_tree_1 = copy.deepcopy(converted_to_trees[i])
+                temp_tree_2 = copy.deepcopy(converted_to_trees[j])
+                temp_tree_1.add_new_tree(temp_tree_2)
+                temp_tree_1.run_reduction_operations()
+                temp_result = temp_tree_1.calculate_magnitude(temp_tree_1.get_top_node())
+                if temp_result > top_score:
+                    top_score = temp_result
+    print(top_score)
+    return 0
 
 class MyTree():
     def __init__(self, original_instructions):
@@ -77,19 +95,24 @@ class MyTree():
             return False
         else:
             if checked_item.get_depth() > 3:
+                # TODO --- CHECK HOW TO PROPERLY MERGE UP
                 left_exploded_figure = checked_item.get_left_item()
                 right_exploded_figure = checked_item.get_right_item()
                 # Determine whether the checked node is the left or right item of its parent
                 if checked_item.get_parent_item().get_left_item() is checked_item:
                     checked_item.get_parent_item().set_left_item(0)
-                    checked_item.get_parent_item().set_right_item(checked_item.get_parent_item().get_right_item() + right_exploded_figure)
-                    # self.find_nearest_up_destination(left_exploded_figure, checked_item.get_parent_item().get_parent_item(), "left")
+                    if isinstance(checked_item.get_parent_item().get_right_item(), int):
+                        checked_item.get_parent_item().set_right_item(checked_item.get_parent_item().get_right_item() + right_exploded_figure)
+                    else:
+                        self.find_nearest_down_destination(right_exploded_figure, checked_item.get_parent_item(), "left")
                     self.find_nearest_up_destination(left_exploded_figure, checked_item.get_parent_item(), "left")
 
                 elif checked_item.get_parent_item().get_right_item() is checked_item:
                     checked_item.get_parent_item().set_right_item(0)
-                    checked_item.get_parent_item().set_left_item(checked_item.get_parent_item().get_left_item() + left_exploded_figure)
-                    # self.find_nearest_up_destination(right_exploded_figure, checked_item.get_parent_item().get_parent_item(), "right")
+                    if isinstance(checked_item.get_parent_item().get_left_item(), int):
+                        checked_item.get_parent_item().set_left_item(checked_item.get_parent_item().get_left_item() + left_exploded_figure)
+                    else:
+                        self.find_nearest_down_destination(left_exploded_figure, checked_item.get_parent_item(), "right")
                     self.find_nearest_up_destination(right_exploded_figure, checked_item.get_parent_item(), "right")
                 return True
             else:
@@ -108,7 +131,6 @@ class MyTree():
                 potential_target = parent_item.get_right_item()
             
             if potential_target is checked_node:
-                # parent = checked_node.get_parent_item()
                 if parent_item != None:
                     self.find_nearest_up_destination(exploded_figure, parent_item, direction)
 
@@ -169,7 +191,7 @@ class MyTree():
             elif direction == "right":
                 checked_item.set_right_item(checked_item.get_right_item() + exploded_figure)
         
-        elif isinstance(potential_target, 'Node'):
+        elif isinstance(potential_target, Node):
             self.find_nearest_down_destination(exploded_figure, potential_target, direction)
     
     def calculate_magnitude(self, checked_node):
@@ -195,9 +217,9 @@ class MyTree():
         former_added_parent = added_tree.get_top_node()
 
         # Update the connections to the top figures
-        self.set_new_top_node(new_top_node)
         former_self_parent.set_parent_item(new_top_node)
         former_added_parent.set_parent_item(new_top_node)
+        self.set_new_top_node(new_top_node)
 
         # Update the depth figures
         self.update_depth_figures(self.get_top_node().get_left_item())
