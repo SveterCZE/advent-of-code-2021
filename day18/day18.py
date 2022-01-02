@@ -2,7 +2,7 @@ import ast
 import math
 
 def get_input():
-    f = open("sample6.txt", "r")
+    f = open("sample7.txt", "r")
     converted_instructions = []
     for i, j in enumerate(f):
         converted_instructions.append(ast.literal_eval(j.strip()))
@@ -20,7 +20,8 @@ def part1(instructions):
     for elem in converted_to_trees:
         elem.run_reduction_operations()
     for elem in converted_to_trees:
-        print(elem)
+        # print(elem.calculate_magnitude(elem.get_top_node()))
+        pass
 
 def part2(instructions):
     pass
@@ -150,12 +151,6 @@ class MyTree():
                 return True
         return False
 
-    
-    # def run_split_operations_recursive_helper(self, checked_node):
-    #     if isinstance(checked_node, int) == True:
-    #         if 
-    #         return False
-
     def create_split_node(self, split_node_value, parent_node):
         left_figure = math.floor(split_node_value / 2)
         right_figure = math.ceil(split_node_value / 2)
@@ -176,7 +171,43 @@ class MyTree():
         
         elif isinstance(potential_target, 'Node'):
             self.find_nearest_down_destination(exploded_figure, potential_target, direction)
+    
+    def calculate_magnitude(self, checked_node):
+        if isinstance(checked_node.get_left_item(), int):
+            left_part = 3 * checked_node.get_left_item()
+        elif isinstance(checked_node.get_left_item(), Node):
+            left_part = 3 * self.calculate_magnitude(checked_node.get_left_item())
+        
+        if isinstance(checked_node.get_right_item(), int):
+            right_part = 2 * checked_node.get_right_item()
+        elif isinstance(checked_node.get_right_item(), Node):
+            right_part = 2 * self.calculate_magnitude(checked_node.get_right_item())
+        
+        total_magnitude = left_part + right_part
+        return total_magnitude
+    
+    def set_new_top_node(self, new_top_node):
+        self.top_node = new_top_node
+    
+    def add_new_tree(self, added_tree):
+        new_top_node = Node(self.get_top_node(), added_tree.get_top_node(), None, 0)
+        former_self_parent = self.get_top_node()
+        former_added_parent = added_tree.get_top_node()
 
+        # Update the connections to the top figures
+        self.set_new_top_node(new_top_node)
+        former_self_parent.set_parent_item(new_top_node)
+        former_added_parent.set_parent_item(new_top_node)
+
+        # Update the depth figures
+        self.update_depth_figures(self.get_top_node().get_left_item())
+        self.update_depth_figures(self.get_top_node().get_right_item())
+
+    def update_depth_figures(self, current_node):
+        if isinstance(current_node, Node):
+            current_node.set_depth(current_node.get_depth() + 1)
+            self.update_depth_figures(current_node.get_left_item())
+            self.update_depth_figures(current_node.get_right_item())
         
 class Node():
     def __init__(self, left_item, right_item, parent_item, depth):
@@ -202,5 +233,11 @@ class Node():
     
     def set_right_item(self, new_right_item):
         self.right_item = new_right_item
+    
+    def set_parent_item(self, new_parent):
+        self.parent_item = new_parent
+    
+    def set_depth(self, new_depth):
+        self.depth = new_depth
     
 main()
