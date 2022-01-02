@@ -1,7 +1,8 @@
 import ast
+import math
 
 def get_input():
-    f = open("sample5.txt", "r")
+    f = open("sample6.txt", "r")
     converted_instructions = []
     for i, j in enumerate(f):
         converted_instructions.append(ast.literal_eval(j.strip()))
@@ -60,7 +61,7 @@ class MyTree():
             had_there_been_explosion = self.run_explosion_operations()
             if had_there_been_explosion == True:
                 continue
-            had_there_been_splits = self.run_split_operations()
+            had_there_been_splits = self.run_split_operations(self.top_node)
             if had_there_been_explosion == False and had_there_been_splits == False:
                 break
 
@@ -122,14 +123,44 @@ class MyTree():
                 elif direction == "right":
                     converted_direction = "left" 
                 self.find_nearest_down_destination(exploded_figure, potential_target, converted_direction)
-        
-        # else:
-        #     parent = checked_node.get_parent_item()
-        #     if parent != None:
-        #         self.find_nearest_up_destination(exploded_figure, parent, direction)
 
-    def run_split_operations(self):
+    def run_split_operations(self, checked_node):
+        left_node = checked_node.get_left_item()
+        right_node = checked_node.get_right_item()
+        if isinstance(left_node, int) == True:
+            if (left_node >= 10):
+                split_node = self.create_split_node(left_node, checked_node)
+                checked_node.set_left_item(split_node)
+                return True
+        
+        if isinstance(left_node, Node):
+            split_operation_result_level_below = self.run_split_operations(left_node)
+            if split_operation_result_level_below == True:
+                return True
+
+        if isinstance(right_node, int) == True:
+            if (right_node >= 10):
+                split_node = self.create_split_node(right_node, checked_node)
+                checked_node.set_right_item(split_node)
+                return True
+        
+        if isinstance(right_node, Node):
+            split_operation_result_level_below = self.run_split_operations(right_node)
+            if split_operation_result_level_below == True:
+                return True
         return False
+
+    
+    # def run_split_operations_recursive_helper(self, checked_node):
+    #     if isinstance(checked_node, int) == True:
+    #         if 
+    #         return False
+
+    def create_split_node(self, split_node_value, parent_node):
+        left_figure = math.floor(split_node_value / 2)
+        right_figure = math.ceil(split_node_value / 2)
+        split_node = Node(left_figure, right_figure, parent_node, parent_node.get_depth() + 1)
+        return split_node
 
     def find_nearest_down_destination(self, exploded_figure, checked_item, direction):
         if direction == "left":
