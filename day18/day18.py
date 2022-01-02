@@ -1,7 +1,7 @@
 import ast
 
 def get_input():
-    f = open("sample2.txt", "r")
+    f = open("sample5.txt", "r")
     converted_instructions = []
     for i, j in enumerate(f):
         converted_instructions.append(ast.literal_eval(j.strip()))
@@ -81,13 +81,14 @@ class MyTree():
                 if checked_item.get_parent_item().get_left_item() is checked_item:
                     checked_item.get_parent_item().set_left_item(0)
                     checked_item.get_parent_item().set_right_item(checked_item.get_parent_item().get_right_item() + right_exploded_figure)
-                    self.find_nearest_up_destination(left_exploded_figure, checked_item.get_parent_item().get_parent_item(), "left")
+                    # self.find_nearest_up_destination(left_exploded_figure, checked_item.get_parent_item().get_parent_item(), "left")
+                    self.find_nearest_up_destination(left_exploded_figure, checked_item.get_parent_item(), "left")
 
                 elif checked_item.get_parent_item().get_right_item() is checked_item:
                     checked_item.get_parent_item().set_right_item(0)
                     checked_item.get_parent_item().set_left_item(checked_item.get_parent_item().get_left_item() + left_exploded_figure)
-                    self.find_nearest_up_destination(right_exploded_figure, checked_item.get_parent_item().get_parent_item(), "right")
-
+                    # self.find_nearest_up_destination(right_exploded_figure, checked_item.get_parent_item().get_parent_item(), "right")
+                    self.find_nearest_up_destination(right_exploded_figure, checked_item.get_parent_item(), "right")
                 return True
             else:
                 explosion_occurrence = self.run_explosion_operations_recursive_helper(checked_item.get_left_item())
@@ -95,23 +96,57 @@ class MyTree():
                     explosion_occurrence = self.run_explosion_operations_recursive_helper(checked_item.get_right_item())
                 return explosion_occurrence
 
+    # TODO --- Improve all checks to make sure it goes properly up and down through the tree
     def find_nearest_up_destination(self, exploded_figure, checked_node, direction):
-        if direction == "left":
-            potential_target = checked_node.get_left_item()
-        elif direction == "right":
-            potential_target = checked_node.get_right_item()
+        parent_item = checked_node.get_parent_item()
+        if parent_item != None:
+            if direction == "left":
+                potential_target = parent_item.get_left_item()
+            elif direction == "right":
+                potential_target = parent_item.get_right_item()
+            
+            if potential_target is checked_node:
+                # parent = checked_node.get_parent_item()
+                if parent_item != None:
+                    self.find_nearest_up_destination(exploded_figure, parent_item, direction)
+
+            elif isinstance(potential_target, int):
+                if direction == "left":
+                    parent_item.set_left_item(parent_item.get_left_item() + exploded_figure)
+                elif direction == "right":
+                    parent_item.set_right_item(parent_item.get_right_item() + exploded_figure)
+            
+            elif isinstance(potential_target, Node):
+                if direction == "left":
+                    converted_direction = "right"
+                elif direction == "right":
+                    converted_direction = "left" 
+                self.find_nearest_down_destination(exploded_figure, potential_target, converted_direction)
         
-        if isinstance(potential_target, int):
-            potential_target += exploded_figure
-        
-        else:
-            parent = checked_node.get_parent_item()
-            if parent != None:
-                self.find_nearest_up_destination(exploded_figure, parent, direction)
+        # else:
+        #     parent = checked_node.get_parent_item()
+        #     if parent != None:
+        #         self.find_nearest_up_destination(exploded_figure, parent, direction)
 
     def run_split_operations(self):
         return False
 
+    def find_nearest_down_destination(self, exploded_figure, checked_item, direction):
+        if direction == "left":
+            potential_target = checked_item.get_left_item()
+        elif direction == "right":
+            potential_target = checked_item.get_right_item()
+        
+        if isinstance(potential_target, int):
+            if direction == "left":
+                checked_item.set_left_item(checked_item.get_left_item() + exploded_figure)
+            elif direction == "right":
+                checked_item.set_right_item(checked_item.get_right_item() + exploded_figure)
+        
+        elif isinstance(potential_target, 'Node'):
+            self.find_nearest_down_destination(exploded_figure, potential_target, direction)
+
+        
 class Node():
     def __init__(self, left_item, right_item, parent_item, depth):
         self.left_item = left_item
