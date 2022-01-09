@@ -1,7 +1,7 @@
 def main():
     scanner_results = get_input()
-    part1(scanner_results)
-    # part2(instructions)
+    confirmed_scanners = part1(scanner_results)
+    part2(confirmed_scanners)
     return 0
 
 def get_input():
@@ -41,33 +41,48 @@ def generate_roll_options():
 def part1(scanner_results):
     # Generate potential orientantions
     roll_options = generate_roll_options()
-    # Create a set of beacon coordinates
+    # Create a set of beacon and scanner coordinates
     confirmed_beacons = set()
+    confirmed_scanners = set()
     # Feed into the set the beacons seen by scanner 0
     beacon_status = create_beacon_status_checker(scanner_results)
-    confirmed_beacons = feed_initial_scanners(confirmed_beacons, scanner_results, beacon_status)
-    connected_beacons = 0
+    confirmed_beacons, confirmed_scanners = feed_initial_scanners(confirmed_beacons, scanner_results, beacon_status, confirmed_scanners)
+    # connected_beacons = 0
     while True:
         for key, value in beacon_status.items():
             if value == False:
-                connect_new_beacons(confirmed_beacons, roll_options, scanner_results, key, beacon_status)
+                connect_new_beacons(confirmed_beacons, roll_options, scanner_results, key, beacon_status, confirmed_scanners)
         if all_beacons_connected(beacon_status) == True:
-            print("All beacons are found.")
             break
-        currently_connected_beacons = count_connected_beacons(beacon_status)
-        if currently_connected_beacons == connected_beacons:
-            print("Some beacons cannot be connected.")
-            break
-        connected_beacons = currently_connected_beacons
-
     print(len(confirmed_beacons))
+    return confirmed_scanners
+
+def part2(confirmed_beacons):
+    max_manhattan_distance = 0
+    beacons_list = []
+    for elem in confirmed_beacons:
+        beacons_list.append(elem)
+    for i in range(len(confirmed_beacons)):
+        for j in range(len(confirmed_beacons)):
+            if i != j:
+                current_manhattan_distance = calculate_manhattan_distance(beacons_list, i, j)
+                if current_manhattan_distance > max_manhattan_distance:
+                    max_manhattan_distance = current_manhattan_distance
+    print(max_manhattan_distance)
+    return 0
+
+def calculate_manhattan_distance(beacons_list, i, j):
+    coord1 = beacons_list[i]
+    coord2 = beacons_list[j]
+    distance = abs(coord1[0] - coord2[0]) + abs(coord1[1] - coord2[1]) + abs(coord1[2] - coord2[2])
+    return distance
 
 def find_first_unconnected(beacon_status):
     for key, value in beacon_status.items():
         if value == False:
             return key
 
-def connect_new_beacons(confirmed_beacons, roll_options, scanner_results, relevant_beacon, beacon_status):
+def connect_new_beacons(confirmed_beacons, roll_options, scanner_results, relevant_beacon, beacon_status, confirmed_scanners):
     # Find bacons overlap between scanners 0 and 1
     potential_matches = {}
     for confirmed_coordinate in confirmed_beacons:
@@ -80,10 +95,11 @@ def connect_new_beacons(confirmed_beacons, roll_options, scanner_results, releva
                 else:
                     potential_matches[(distance, possible_rotation_master)] += 1
     for key,value in potential_matches.items():
-        if value == 12:
+        if value >= 12:
             offset = key[0]
             rotation = key[1]
             confirmed_beacons = rotate_and_add_new_bacons(confirmed_beacons, scanner_results[relevant_beacon], offset, rotation)
+            confirmed_scanners = rotate_and_add_new_bacons(confirmed_scanners, [(0,0,0)], offset, rotation)
             beacon_status[relevant_beacon] = True
 
 def count_connected_beacons(beacon_status):
@@ -99,11 +115,12 @@ def all_beacons_connected(beacon_status):
             return False
     return True
 
-def feed_initial_scanners(confirmed_beacons, scanner_results, beacon_status):
+def feed_initial_scanners(confirmed_beacons, scanner_results, beacon_status, confirmed_scanners):
     for elem in scanner_results[0]:
         confirmed_beacons.add(elem)
     beacon_status[0] = True
-    return confirmed_beacons
+    confirmed_scanners.add((0,0,0))
+    return confirmed_beacons, confirmed_scanners
 
 def create_beacon_status_checker(scanner_results):
     beacon_status = {}
