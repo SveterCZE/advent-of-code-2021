@@ -206,4 +206,5 @@ def apply_rotation(rotation_master, input_coordinate):
 
     return (rotated_coordinate[0], rotated_coordinate[1], rotated_coordinate[2])
 
+
 main()

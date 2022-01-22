@@ -13,7 +13,6 @@ def get_input():
     return instructions
 
 def part1(instructions):
-    print(instructions)
     db_points = set()
     for elem in instructions:
         if elem[0] == "on":
@@ -39,7 +38,115 @@ def turn_off(current_instruction, db_points):
                     db_points.remove(coord_tuple)
     return db_points
 
-def part2(insturctions):
-    pass
+def part2(instructions):
+    list_of_cubes = []
+    for elem in instructions:
+        instruction_cube = reactor_cube(elem[1:])
+        if elem[0] == "on":
+            list_of_cubes = turn_on_cube(list_of_cubes, instruction_cube, "on")
+        elif elem[0] == "off":
+            list_of_cubes = turn_on_cube(list_of_cubes, instruction_cube, "off")
+    total_size = calculate_total_size(list_of_cubes)
+    print(total_size)
+
+def calculate_total_size(list_of_cubes):
+    size_sum = 0
+    for elem in list_of_cubes:
+        size_sum += elem.calculate_volume()
+    return size_sum
+
+def turn_on_cube(list_of_cubes, inserted_cube, on_off_instruction):
+    intersections = True
+    while intersections:
+        for i in reversed(range(len(list_of_cubes))):
+            cuboid = list_of_cubes[i]
+            # Alternative 1 --- Inserted cuboid fully encloses an existing cuboid. Remove the existing cuboid
+            if inserted_cube.x_left <= cuboid.x_left and inserted_cube.x_right >= cuboid.x_right and inserted_cube.y_left <= cuboid.y_left and inserted_cube.y_right >= cuboid.y_right and inserted_cube.z_left <= cuboid.z_left and inserted_cube.z_right >= cuboid.z_right:
+                del list_of_cubes[i]
+                break
+            # Alternative 2 --- Test if there any actaully any intersections
+            if inserted_cube.x_left <= cuboid.x_right and inserted_cube.x_right >= cuboid.x_left and inserted_cube.y_left <= cuboid.y_right and inserted_cube.y_right >= cuboid.y_left and inserted_cube.z_left <= cuboid.z_right and inserted_cube.z_right >= cuboid.z_left:
+                pass
+            else:
+                continue
+            # Alternative 3 --- There are actually intersections
+            if inserted_cube.x_left in range(cuboid.x_left+1, cuboid.x_right+1):
+                list_of_cubes[i] =   reactor_cube(((cuboid.x_left, inserted_cube.x_left-1), (cuboid.y_left, cuboid.y_right), (cuboid.z_left, cuboid.z_right)))
+                list_of_cubes.append(reactor_cube(((inserted_cube.x_left, cuboid.x_right),  (cuboid.y_left, cuboid.y_right), (cuboid.z_left, cuboid.z_right))))
+                break
+
+            if inserted_cube.x_right in range(cuboid.x_left, cuboid.x_right):
+                list_of_cubes[i] =   reactor_cube(((inserted_cube.x_right+1, cuboid.x_right), (cuboid.y_left, cuboid.y_right), (cuboid.z_left, cuboid.z_right)))
+                list_of_cubes.append(reactor_cube(((cuboid.x_left, inserted_cube.x_right),  (cuboid.y_left, cuboid.y_right), (cuboid.z_left, cuboid.z_right))))
+                break
+                
+            if inserted_cube.y_left in range(cuboid.y_left+1, cuboid.y_right+1):
+                list_of_cubes[i] =   reactor_cube(((cuboid.x_left, cuboid.x_right), (cuboid.y_left, inserted_cube.y_left-1), (cuboid.z_left, cuboid.z_right)))
+                list_of_cubes.append(reactor_cube(((cuboid.x_left, cuboid.x_right), (inserted_cube.y_left, cuboid.y_right), (cuboid.z_left, cuboid.z_right))))
+                break
+            if inserted_cube.y_right in range(cuboid.y_left, cuboid.y_right):
+                list_of_cubes[i] =   reactor_cube(((cuboid.x_left, cuboid.x_right), (inserted_cube.y_right+1, cuboid.y_right), (cuboid.z_left, cuboid.z_right)))
+                list_of_cubes.append(reactor_cube(((cuboid.x_left, cuboid.x_right), (cuboid.y_left, inserted_cube.y_right), (cuboid.z_left, cuboid.z_right))))
+                break
+                
+            if inserted_cube.z_left in range(cuboid.z_left+1, cuboid.z_right+1):
+                list_of_cubes[i] =   reactor_cube(((cuboid.x_left, cuboid.x_right), (cuboid.y_left, cuboid.y_right), (cuboid.z_left, inserted_cube.z_left-1)))
+                list_of_cubes.append(reactor_cube(((cuboid.x_left, cuboid.x_right), (cuboid.y_left, cuboid.y_right), (inserted_cube.z_left, cuboid.z_right))))
+                break
+            if inserted_cube.z_right in range(cuboid.z_left, cuboid.z_right):
+                list_of_cubes[i] =   reactor_cube(((cuboid.x_left, cuboid.x_right), (cuboid.y_left, cuboid.y_right), (inserted_cube.z_right+1, cuboid.z_right)))
+                list_of_cubes.append(reactor_cube(((cuboid.x_left, cuboid.x_right), (cuboid.y_left, cuboid.y_right), (cuboid.z_left, inserted_cube.z_right))))
+                break
+        else: intersections = False
+    if on_off_instruction == "on": list_of_cubes.append(inserted_cube)
+    return list_of_cubes
+
+class reactor_cube():
+    def __init__(self, initial_coordinates) -> None:
+        self.x_left = initial_coordinates[0][0]
+        self.x_right = initial_coordinates[0][1]
+        self.y_left = initial_coordinates[1][0]
+        self.y_right = initial_coordinates[1][1]
+        self.z_left = initial_coordinates[2][0]
+        self.z_right = initial_coordinates[2][1]
+
+    def do_cubes_overlap(self, checked_cube):
+        x_plane_overlap = self.x_plane_overlap(checked_cube)
+        y_plane_overlap = self.y_plane_overlap(checked_cube)
+        z_plane_overlap = self.z_plane_overlap(checked_cube)
+        if x_plane_overlap == True and y_plane_overlap == True and z_plane_overlap == True:
+            return True
+        else:
+            return False
+
+    def x_plane_overlap(self, checked_cube):
+        if self.x_right >= checked_cube.x_left and self.x_left <= checked_cube.x_right:
+            return True
+        else:
+            return False
+
+    def y_plane_overlap(self, checked_cube):
+        if self.y_right >= checked_cube.y_left and self.y_left <= checked_cube.y_right:
+            return True
+        else:
+            return False
+
+    def z_plane_overlap(self, checked_cube):
+        if self.z_right >= checked_cube.z_left and self.z_left <= checked_cube.z_right:
+            return True
+        else:
+            return False
+
+    def calculate_volume(self):
+        x_size = abs(self.x_left - self.x_right) + 1
+        y_size = abs(self.y_left - self.y_right) + 1
+        z_size = abs(self.z_left - self.z_right) + 1
+        return x_size * y_size * z_size
+
+    def fully_contains_another_cube(self, contained_cube):
+        if self.x_left <= contained_cube.x_left and self.x_right >= contained_cube.x_right and self.y_left <= contained_cube.y_left and self.y_right >= contained_cube.y_right and self.z_left <= contained_cube.z_left and self.z_right >= contained_cube.z_right:
+            return True
+        else:
+            return False
 
 main()
