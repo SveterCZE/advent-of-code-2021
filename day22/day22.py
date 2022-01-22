@@ -61,7 +61,7 @@ def turn_on_cube(list_of_cubes, inserted_cube, on_off_instruction):
         for i in reversed(range(len(list_of_cubes))):
             cuboid = list_of_cubes[i]
             # Alternative 1 --- Inserted cuboid fully encloses an existing cuboid. Remove the existing cuboid
-            if inserted_cube.x_left <= cuboid.x_left and inserted_cube.x_right >= cuboid.x_right and inserted_cube.y_left <= cuboid.y_left and inserted_cube.y_right >= cuboid.y_right and inserted_cube.z_left <= cuboid.z_left and inserted_cube.z_right >= cuboid.z_right:
+            if inserted_cube.fully_contains_another_cube(cuboid) == True:
                 del list_of_cubes[i]
                 break
             # Alternative 2 --- Test if there any actaully any intersections
@@ -109,33 +109,6 @@ class reactor_cube():
         self.y_right = initial_coordinates[1][1]
         self.z_left = initial_coordinates[2][0]
         self.z_right = initial_coordinates[2][1]
-
-    def do_cubes_overlap(self, checked_cube):
-        x_plane_overlap = self.x_plane_overlap(checked_cube)
-        y_plane_overlap = self.y_plane_overlap(checked_cube)
-        z_plane_overlap = self.z_plane_overlap(checked_cube)
-        if x_plane_overlap == True and y_plane_overlap == True and z_plane_overlap == True:
-            return True
-        else:
-            return False
-
-    def x_plane_overlap(self, checked_cube):
-        if self.x_right >= checked_cube.x_left and self.x_left <= checked_cube.x_right:
-            return True
-        else:
-            return False
-
-    def y_plane_overlap(self, checked_cube):
-        if self.y_right >= checked_cube.y_left and self.y_left <= checked_cube.y_right:
-            return True
-        else:
-            return False
-
-    def z_plane_overlap(self, checked_cube):
-        if self.z_right >= checked_cube.z_left and self.z_left <= checked_cube.z_right:
-            return True
-        else:
-            return False
 
     def calculate_volume(self):
         x_size = abs(self.x_left - self.x_right) + 1
